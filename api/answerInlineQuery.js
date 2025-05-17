@@ -32,8 +32,8 @@ export default async function handler(req, res) {
     // Prepare the game result
     const gameResult = {
       type: 'game',
-      id: '2048game', 
-      game_short_name: '2048game',
+      id: 'game2048', 
+      game_short_name: 'game2048',
       reply_markup: {
         inline_keyboard: [
           [{ text: "Play 2048", callback_game: {} }]
