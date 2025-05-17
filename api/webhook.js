@@ -6,16 +6,15 @@ export default async function handler(req, res) {
 
   try {
     const update = req.body;
+    const telegramToken = process.env.TELEGRAM_BOT_TOKEN;
+    if (!telegramToken) {
+      console.error('TELEGRAM_BOT_TOKEN is not defined');
+      return res.status(500).json({ error: 'Server configuration error' });
+    }
     
     // Handle different types of updates
     if (update.callback_query && update.callback_query.game_short_name === 'game2048') {
       // This is a game callback query - redirect user to the game
-      const telegramToken = process.env.TELEGRAM_BOT_TOKEN;
-      if (!telegramToken) {
-        console.error('TELEGRAM_BOT_TOKEN is not defined');
-        return res.status(500).json({ error: 'Server configuration error' });
-      }
-      
       const callbackQueryId = update.callback_query.id;
       const userId = update.callback_query.from.id;
       
