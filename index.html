@@ -23,6 +23,7 @@
       align-items: center;
       margin: 20px auto;
       width: 350px;
+      max-width: 100%;
     }
     .score-container {
       background: #bbada0;
@@ -49,6 +50,31 @@
       border-radius: 6px;
       padding: 10px;
       position: relative;
+      touch-action: none;
+      max-width: 100%;
+    }
+    /* Responsive styling for mobile */
+    @media (max-width: 450px) {
+      #game {
+        grid-template-columns: repeat(4, 1fr);
+        grid-template-rows: repeat(4, 1fr);
+        gap: 6px;
+        padding: 6px;
+        width: 90vw;
+        height: 90vw;
+        max-width: 350px;
+      }
+      .cell {
+        width: 100%;
+        height: 100%;
+        font-size: 7vw;
+      }
+      .header {
+        width: 90vw;
+      }
+      h1 {
+        font-size: 8vw;
+      }
     }
     .cell {
       width: 80px; 
@@ -145,7 +171,7 @@
   </div>
   
   <div class="instructions">
-    <p><strong>HOW TO PLAY:</strong> Use your arrow keys to move the tiles. When two tiles with the same number touch, they merge into one!</p>
+    <p><strong>HOW TO PLAY:</strong> Use arrow keys to move tiles (or swipe on mobile). When two tiles with the same number touch, they merge into one!</p>
   </div>
   
   <script>
@@ -154,11 +180,49 @@
     let score = 0;
     let gameOver = false;
     let gameWon = false;
+    let highScore = localStorage.getItem('2048_highscore') || 0;
     
     const gameEl = document.getElementById('game');
     const scoreEl = document.getElementById('score');
     const messageEl = document.querySelector('.game-message');
     const messageTextEl = document.getElementById('game-message-text');
+
+    // For Telegram gaming integration
+    function handleTelegramWebAppReady() {
+      try {
+        if (window.Telegram && window.Telegram.WebApp) {
+          console.log("Telegram WebApp detected");
+          
+          // Initialize Telegram WebApp
+          const tg = window.Telegram.WebApp;
+          tg.expand();
+          
+          // Set up game score reporting
+          window.gameScoreUpdater = function(newScore) {
+            if (tg.initDataUnsafe && tg.initDataUnsafe.query_id) {
+              // Report score to Telegram
+              fetch(`https://${window.location.hostname}/api/setGameScore`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  score: newScore,
+                  inline_message_id: tg.initDataUnsafe.inline_message_id
+                })
+              }).then(response => response.json())
+                .then(data => console.log("Score updated:", data))
+                .catch(error => console.error("Error updating score:", error));
+            }
+          };
+          
+          // Make sure Telegram knows the game is loaded
+          tg.ready();
+        }
+      } catch (e) {
+        console.error("Error initializing Telegram WebApp:", e);
+      }
+    }
 
     function draw() {
       gameEl.innerHTML = '';
@@ -176,6 +240,17 @@
       }
       
       scoreEl.textContent = score;
+      
+      // Update high score if needed
+      if (score > highScore) {
+        highScore = score;
+        localStorage.setItem('2048_highscore', highScore);
+        
+        // Report score to Telegram if applicable
+        if (window.gameScoreUpdater) {
+          window.gameScoreUpdater(score);
+        }
+      }
       
       // Show appropriate message if game is over or won
       if (gameWon) {
@@ -427,8 +502,85 @@
       draw();
     }
 
+    // Touch handling for mobile support
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchEndX = 0;
+    let touchEndY = 0;
+
+    gameEl.addEventListener('touchstart', function(e) {
+      touchStartX = e.changedTouches[0].screenX;
+      touchStartY = e.changedTouches[0].screenY;
+      e.preventDefault();
+    }, { passive: false });
+
+    gameEl.addEventListener('touchend', function(e) {
+      if (gameOver || gameWon) return;
+      
+      touchEndX = e.changedTouches[0].screenX;
+      touchEndY = e.changedTouches[0].screenY;
+      
+      handleSwipe();
+      e.preventDefault();
+    }, { passive: false });
+
+    function handleSwipe() {
+      const deltaX = touchEndX - touchStartX;
+      const deltaY = touchEndY - touchStartY;
+      const threshold = 50; // Minimum distance for swipe detection
+      
+      let moved = false;
+      
+      if (Math.abs(deltaX) > Math.abs(deltaY)) {
+        // Horizontal swipe
+        if (Math.abs(deltaX) < threshold) return;
+        
+        if (deltaX > 0) {
+          // Swipe right
+          moved = moveRight();
+        } else {
+          // Swipe left
+          moved = moveLeft();
+        }
+      } else {
+        // Vertical swipe
+        if (Math.abs(deltaY) < threshold) return;
+        
+        if (deltaY > 0) {
+          // Swipe down
+          moved = moveDown();
+        } else {
+          // Swipe up
+          moved = moveUp();
+        }
+      }
+      
+      if (moved) {
+        addRandom();
+        draw();
+        
+        // Check for win or game over
+        if (checkWin()) {
+          gameWon = true;
+          draw();
+        } else if (checkGameOver()) {
+          gameOver = true;
+          draw();
+        }
+      }
+    }
+
     document.addEventListener('keydown', handleKey);
+    
+    // Initialize the game
     restartGame();
+    
+    // Check for Telegram WebApp integration
+    if (window.Telegram) {
+      handleTelegramWebAppReady();
+    } else {
+      window.addEventListener('TelegramWebAppReady', handleTelegramWebAppReady);
+    }
   </script>
 </body>
 </html>

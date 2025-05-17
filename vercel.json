@@ -1,0 +1,25 @@
+{
+  "version": 2,
+  "buildCommand": "",
+  "outputDirectory": ".",
+  "functions": {
+    "api/*.js": {
+      "memory": 1024,
+      "maxDuration": 10
+    }
+  },
+  "routes": [
+    {
+      "src": "/webhook",
+      "dest": "/api/webhook.js"
+    },
+    {
+      "src": "/answerInlineQuery",
+      "dest": "/api/answerInlineQuery.js"
+    },
+    {
+      "src": "/setGameScore",
+      "dest": "/api/setGameScore.js"
+    }
+  ]
+} 
