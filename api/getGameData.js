@@ -7,7 +7,7 @@ export default function handler(req, res) {
   
   // Return the game data for Telegram
   res.status(200).json({
-    game_short_name: "2048game",
+    game_short_name: "game2048",
     title: "2048 Game",
     description: "Play the classic 2048 puzzle game",
     photo_url: `https://${req.headers.host}/thumbnail.png`,

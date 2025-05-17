@@ -8,7 +8,7 @@ export default async function handler(req, res) {
     const update = req.body;
     
     // Handle different types of updates
-    if (update.callback_query && update.callback_query.game_short_name === '2048game') {
+    if (update.callback_query && update.callback_query.game_short_name === 'game2048') {
       // This is a game callback query - redirect user to the game
       const telegramToken = process.env.TELEGRAM_BOT_TOKEN;
       if (!telegramToken) {
