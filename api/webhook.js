@@ -52,7 +52,31 @@ export default async function handler(req, res) {
       });
       
       return res.status(200).json(await res.json());
+    }
+    else if (update.message?.text === '/play') {
+      const chatId = update.message.chat.id;
+      await fetch(`https://api.telegram.org/bot${telegramToken}/sendGame`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: chatId,
+          game_short_name: 'game2048'  // 这个必须与你在 BotFather 中注册的游戏短名一致
+        })
+      });
+      return res.status(200).end();
     } 
+    if (update.message?.text === '/about') {
+      const chatId = update.message.chat.id;
+      await fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: '欢迎来到2048小游戏! 这是我的第一个游戏, 请输入/play开始游戏'
+        })
+      });
+      return res.status(200).end();
+    }
     else {
       // Unhandled update type
       console.log('Unhandled update type:', update);
